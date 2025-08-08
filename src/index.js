@@ -62,6 +62,7 @@ const optionsDefault = {
   },
   js: {
     inline: false,
+    head: true,
     minify: true,
   },
   media: {

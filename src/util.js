@@ -82,6 +82,11 @@ const injectHead = (html, injected) => {
   return split[0] + injected + tagHeadEnd + split[1]
 }
 
+const injectBody = (html, injected) => {
+  const split = html.split("</body>")
+  return split[0] + injected + "</body>" + split[1]
+}
+
 const tag = (tagName, content) => `<${tagName}>${content}</${tagName}>`
 
 const logError = (msg) => (ex) => {
@@ -95,6 +100,7 @@ module.exports = {
   mergeDeep,
   readResource,
   injectHead,
+  injectBody,
   tag,
   replaceSep,
   logError,
