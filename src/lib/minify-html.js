@@ -18,7 +18,7 @@ const minifyOptions = {
 
 const minifyHtml = (res) =>
   minify(res, minifyOptions).catch((ex) => {
-    console.log("Minify error", ex)
+    //  console.log("Minify error", ex)
   })
 
 module.exports = minifyHtml

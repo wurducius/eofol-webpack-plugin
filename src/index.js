@@ -22,14 +22,14 @@ const onRunStarted = (compiler, options) => (compilation) => {
   )
 }
 
-const onCompilationFinished = (compiler) => (compilation) => {
+const onCompilationFinished = (compiler, options) => (compilation) => {
   compilation.hooks.processAssets.tapPromise(
     {
       name: PLUGIN_NAME,
       //   stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE,
       additionalAssets: true,
     },
-    (compiler) => optimizeAssets(compiler, compilation),
+    (compiler) => optimizeAssets(compiler, compilation, options),
   )
 }
 
@@ -90,7 +90,7 @@ class EofolWebpackPlugin {
   apply(compiler) {
     compiler.hooks.thisCompilation.tap(PLUGIN_NAME, onInitCompilation(compiler, this.options))
     compiler.hooks.run.tap(PLUGIN_NAME, onRunStarted(compiler, this.options))
-    compiler.hooks.compilation.tap(PLUGIN_NAME, onCompilationFinished(compiler))
+    compiler.hooks.compilation.tap(PLUGIN_NAME, onCompilationFinished(compiler, this.options))
   }
 }
 

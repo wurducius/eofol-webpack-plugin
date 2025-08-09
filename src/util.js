@@ -29,13 +29,28 @@ const addAsset = (compilation, assetName, nextSource, info, merge) => {
   })
 }
 
+const updateAsset = (compilation, assetName, nextSource) => {
+  compilation.updateAsset(assetName, {
+    source: () => nextSource,
+    size: () => nextSource.length,
+  })
+}
+
 const transformAsset = (compilation, assetName) => {
   const asset = compilation.assets[assetName]
   const source = asset.source()
-  const finish = (nextSource) => {
-    addAsset(compilation, assetName, nextSource, asset.info, true)
-  }
+  const finish = (nextSource) => updateAsset(compilation, assetName, nextSource)
   return { assetName, asset, source, finish }
+}
+
+function arrayCombinator(items, handler) {
+  if (Array.isArray(items)) {
+    items.forEach((item, index) => {
+      handler(item, index)
+    })
+  } else if (items) {
+    handler(items, undefined)
+  }
 }
 
 const mapCombinator = (items, mapper) => {
@@ -95,7 +110,9 @@ const logError = (msg) => (ex) => {
 
 module.exports = {
   addAsset,
+  updateAsset,
   transformAsset,
+  arrayCombinator,
   mapCombinator,
   mergeDeep,
   readResource,
