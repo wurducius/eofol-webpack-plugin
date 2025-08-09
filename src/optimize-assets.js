@@ -1,6 +1,28 @@
 const { addAsset, updateAsset, mapCombinator, arrayCombinator } = require("./util")
 const minifyHtmlImpl = require("./lib/minify-html")
 
+const removeUnusedScripts = (compilation, viewsJs) => {
+  arrayCombinator(Object.keys(viewsJs), (pageName) => {
+    const scriptNames = viewsJs[pageName]
+    arrayCombinator(scriptNames, (scriptName) => {
+      if (compilation.assets[scriptName]) {
+        delete compilation.assets[scriptName]
+      }
+    })
+  })
+}
+
+const minify = (compilation) =>
+  Promise.all(
+    mapCombinator(
+      Object.keys(compilation.assets).filter((assetName) => assetName.endsWith(".html")),
+      (assetName) =>
+        minifyHtmlImpl(compilation.assets[assetName].source()).then((minifiedContent) =>
+          updateAsset(compilation, assetName, minifiedContent),
+        ),
+    ),
+  )
+
 // optimize images
 // optimize icons
 // minify
@@ -21,24 +43,10 @@ const optimizeAssets = (_compiler, compilation, options) => {
   } = options.css
   const { views: viewsJs, inline: inlineJs, minify: minifyJs, head: headJs } = options.js
 
-  mapCombinator(Object.keys(viewsJs), (pageName) => {
-    const scriptNames = viewsJs[pageName]
-    arrayCombinator(scriptNames, (scriptName) => {
-      if (compilation.assets[scriptName]) {
-        delete compilation.assets[scriptName]
-      }
-    })
-  })
+  // removeUnusedScripts(compilation, viewsJs)
 
   if (minifyHtml) {
-    return Promise.all(
-      mapCombinator(Object.keys(compilation.assets), (assetName) => {
-        if (assetName.endsWith(".html")) {
-          const content = compilation.assets[assetName].source()
-          return minifyHtmlImpl(content).then((minifiedContent) => updateAsset(compilation, assetName, minifiedContent))
-        }
-      }),
-    )
+    return minify(compilation)
   }
 
   try {

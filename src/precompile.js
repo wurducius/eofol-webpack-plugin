@@ -2,6 +2,7 @@ const { sep } = require("path")
 const {
   addAsset,
   mapCombinator,
+  arrayCombinator,
   readResource,
   injectHead,
   injectBody,
@@ -64,6 +65,100 @@ const helmetJsonDefault = {
 const helmet = (data) =>
   `<link href="${data.logo}" rel="icon"><link href="./manifest.json" rel="manifest"><meta content="${data.description}" name="description"><meta name="keywords" content="${data.keywords}"><meta content="${data.title}" property="og:title"><meta content="${data.imageType}" property="og:type"><meta content="${data.url}" property="og:url"><meta content="${data.logo}" property="og:image"><meta content="${data.imageAlt}" property="og:image:alt"><link href="${data.logo}" rel="apple-touch-icon"><meta content="${data.theme}" name="theme-color"><title>${data.title}</title>`
 
+const compileHtmlFromTemplate = (compilation, template) => {
+  template.forEach((pageName) => {
+    const { source, finish } = transformAsset(compilation, replaceSep(pageName))
+    const nextSource = `${templateTop}${source}${templateBottom}`
+    finish(nextSource)
+  })
+}
+
+const injectDoctypeImpl = (compilation, injectDoctype) => {
+  Object.keys(compilation.assets)
+    .filter((assetName) => assetName.endsWith(".html"))
+    .forEach((pageName) => {
+      if (injectDoctype) {
+        const { source, finish } = transformAsset(compilation, pageName)
+        const nextSource = `${doctype}${source}`
+        finish(nextSource)
+      }
+    })
+}
+
+const injectManifest = (compilation) => {
+  const manifestJson = generateManifest({})
+  addAsset(compilation, "manifest.json", JSON.stringify(manifestJson), {}, false)
+  const faviconContent = faviconContentDefault
+  addAsset(compilation, "favicon.ico", faviconContent, {}, false)
+}
+
+const injectRobots = (compilation) => {
+  addAsset(compilation, "robots.txt", robotsContent, {}, false)
+}
+
+const injectSw = (compilation) => {
+  addAsset(compilation, "service-worker.js", swContent, {}, false)
+}
+
+const injectImgFallback = (compilation) => {
+  addAsset(compilation, "img-fallback.svg", imgFallbackContent, {}, false)
+}
+
+const injectAssets = (compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback) => {
+  if (injectDoctype || errorOverlay) {
+    injectDoctypeImpl(compilation, injectDoctype)
+  }
+
+  if (manifest) {
+    injectManifest(compilation)
+  }
+
+  if (robots) {
+    injectRobots(compilation)
+  }
+
+  if (sw) {
+    injectSw(compilation)
+  }
+
+  if (injectImageFallback) {
+    injectImgFallback(compilation)
+  }
+}
+
+const injectHtmlHead = (
+  assetName,
+  source,
+  injectBaseHeader,
+  header,
+  inlineCss,
+  inlineJs,
+  sharedCssContent,
+  contents,
+) => {
+  const baseName = assetName.replaceAll(sep, "-").replace(".html", "")
+  const scriptName = "assets/js/" + baseName + ".js"
+  const stylesheetName = "assets/css/" + baseName + ".css"
+  const injectedBaseHead = injectBaseHeader ? baseHeader : ""
+  const injectedHeader = header ? helmet(mergeDeep(helmetJsonDefault, header)) : ""
+  const injectedFontStyle = `@font-face{font-family:Roboto;font-style:normal;font-weight:400;font-display:swap;src:url(./assets/media/fonts/Roboto-Regular.woff2) format("woff2")}body{font-family:Roboto,sans-serif;font-size:1rem}`
+  const injectedStyle = inlineCss
+    ? tag("style", [...sharedCssContent, ...contents, injectedFontStyle].filter(Boolean).join(" "))
+    : ""
+  const injectedScript = !inlineJs && headJs ? `<script src="${scriptName}" async></script>` : ""
+  const injectedStylesheet = !inlineCss ? `<link href="${stylesheetName}" rel="stylesheet" ></link>` : ""
+  const injected = `${injectedScript}${injectedStylesheet}${injectedBaseHead}${injectedHeader}${injectedStyle}`
+  return injectHead(source, injected)
+}
+
+const injectHtmlBody = (compilation, pageName, source, viewsJs, inlineJs, headJs) => {
+  const injectedScriptExternal = !inlineJs && !headJs ? `<script src="${scriptName}"></script>` : ""
+  const jsContents = mapCombinator(viewsJs[pageName], (scriptAssetName) => compilation.assets[scriptAssetName].source())
+  const injectedScriptInline = inlineJs ? `<script>${jsContents.filter(Boolean).join(" ")}</script>` : ""
+  const injectedBody = `${injectedScriptExternal}${injectedScriptInline}`
+  return injectBody(source, injectedBody)
+}
+
 // and and remove assets
 // create directories
 const precompile = (_compiler, compilation, options) => {
@@ -83,49 +178,16 @@ const precompile = (_compiler, compilation, options) => {
 
   // compile html from template
   if (template.length > 0) {
-    template.forEach((pageName) => {
-      const { source, finish } = transformAsset(compilation, replaceSep(pageName))
-      const nextSource = `${templateTop}${source}${templateBottom}`
-      finish(nextSource)
-    })
+    compileHtmlFromTemplate(compilation, template)
   }
 
   // inject doctype
   // inject error overlay (TODO)
-  if (injectDoctype || errorOverlay) {
-    Object.keys(compilation.assets)
-      .filter((assetName) => assetName.endsWith(".html"))
-      .forEach((pageName) => {
-        if (injectDoctype) {
-          const { source, finish } = transformAsset(compilation, pageName)
-          const nextSource = `${doctype}${source}`
-          finish(nextSource)
-        }
-      })
-  }
-
   // inject manifest and favicon
-  if (manifest) {
-    const manifestJson = generateManifest({})
-    addAsset(compilation, "manifest.json", JSON.stringify(manifestJson), {}, false)
-    const faviconContent = faviconContentDefault
-    addAsset(compilation, "favicon.ico", faviconContent, {}, false)
-  }
-
   // inject robots
-  if (robots) {
-    addAsset(compilation, "robots.txt", robotsContent, {}, false)
-  }
-
   // inject sw
-  if (sw) {
-    addAsset(compilation, "service-worker.js", swContent, {}, false)
-  }
-
   // inject image fallback
-  if (injectImageFallback) {
-    addAsset(compilation, "img-fallback.svg", imgFallbackContent, {}, false)
-  }
+  injectAssets(compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback)
 
   // inject css
   // inject font
@@ -134,37 +196,26 @@ const precompile = (_compiler, compilation, options) => {
   const logErrorCssInline = logError("CSS inline")
   try {
     return Promise.all(mapCombinator(sharedCss, readResource)).then((sharedCssContent) =>
-      Object.keys(views).forEach((pageName) => {
-        const assetName = replaceSep(pageName) + ".html"
-        return Promise.all(mapCombinator(views[pageName], readResource)).then((contents) => {
-          const { source, finish } = transformAsset(compilation, assetName)
-          const baseName = assetName.replaceAll(sep, "-").replace(".html", "")
-          const scriptName = "assets/js/" + baseName + ".js"
-          const stylesheetName = "assets/css/" + baseName + ".css"
-
-          const injectedBaseHead = injectBaseHeader ? baseHeader : ""
-          const injectedHeader = header ? helmet(mergeDeep(helmetJsonDefault, header)) : ""
-          const injectedFontStyle = `@font-face{font-family:Roboto;font-style:normal;font-weight:400;font-display:swap;src:url(./assets/media/fonts/Roboto-Regular.woff2) format("woff2")}body{font-family:Roboto,sans-serif;font-size:1rem}`
-          const injectedStyle = inlineCss
-            ? tag("style", [...sharedCssContent, ...contents, injectedFontStyle].filter(Boolean).join(" "))
-            : ""
-          const injectedScript = !inlineJs && headJs ? `<script src="${scriptName}" async></script>` : ""
-          const injectedStylesheet = !inlineCss ? `<link href="${stylesheetName}" rel="stylesheet" ></link>` : ""
-          const injected = `${injectedScript}${injectedStylesheet}${injectedBaseHead}${injectedHeader}${injectedStyle}`
-          const nextSourceHead = injectHead(source, injected)
-
-          const injectedScriptExternal = !inlineJs && !headJs ? `<script src="${scriptName}"></script>` : ""
-          const jsContents = mapCombinator(viewsJs[pageName], (scriptAssetName) =>
-            compilation.assets[scriptAssetName].source(),
-          )
-
-          const injectedScriptInline = inlineJs ? `<script>${jsContents.filter(Boolean).join(" ")}</script>` : ""
-          const injectedBody = `${injectedScriptExternal}${injectedScriptInline}`
-          const nextSource = injectBody(nextSourceHead, injectedBody)
-
-          finish(nextSource)
-        })
-      }),
+      Promise.all(
+        Object.keys(views).map((pageName) => {
+          const assetName = replaceSep(pageName) + ".html"
+          return Promise.all(mapCombinator(views[pageName], readResource)).then((contents) => {
+            const { source, finish } = transformAsset(compilation, assetName)
+            const nextSourceHead = injectHtmlHead(
+              assetName,
+              source,
+              injectBaseHeader,
+              header,
+              inlineCss,
+              inlineJs,
+              sharedCssContent,
+              contents,
+            )
+            const nextSource = injectHtmlBody(compilation, pageName, nextSourceHead, viewsJs, inlineJs, headJs)
+            finish(nextSource)
+          })
+        }),
+      ),
     )
   } catch (ex) {
     logErrorCssInline(ex)

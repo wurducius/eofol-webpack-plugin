@@ -29,7 +29,7 @@ const onCompilationFinished = (compiler, options) => (compilation) => {
       //   stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE,
       additionalAssets: true,
     },
-    (compiler) => optimizeAssets(compiler, compilation, options),
+    async (compiler) => optimizeAssets(compiler, compilation, options),
   )
 }
 
