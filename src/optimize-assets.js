@@ -43,7 +43,7 @@ const optimizeAssets = (_compiler, compilation, options) => {
   } = options.css
   const { views: viewsJs, inline: inlineJs, minify: minifyJs, head: headJs } = options.js
 
-  // removeUnusedScripts(compilation, viewsJs)
+  removeUnusedScripts(compilation, viewsJs)
 
   if (minifyHtml) {
     return minify(compilation)
