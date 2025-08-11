@@ -1,6 +1,6 @@
 const { minify } = require("html-minifier-terser")
 
-const minifyOptions = {
+const minifyHtmlOptions = {
   continueOnParseError: true,
   removeComments: true,
   minifyHTML: true,
@@ -17,7 +17,7 @@ const minifyOptions = {
 }
 
 const minifyHtml = (res) =>
-  minify(res, minifyOptions).catch((ex) => {
+  minify(res, minifyHtmlOptions).catch((ex) => {
     //  console.log("Minify error", ex)
   })
 

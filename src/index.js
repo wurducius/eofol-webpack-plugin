@@ -48,7 +48,6 @@ const optionsDefault = {
     injectViews: {},
     injectShared: [],
     inline: true,
-    minify: true,
   },
   font: {
     path: "resources/Roboto-Regular.woff2",
@@ -63,7 +62,6 @@ const optionsDefault = {
   js: {
     inline: false,
     head: true,
-    minify: true,
   },
   media: {
     optimizeImages: true,
@@ -78,8 +76,6 @@ const optionsDefault = {
     add: {},
     remove: {},
   },
-  createDirectories: [],
-  compress: false,
 }
 
 class EofolWebpackPlugin {

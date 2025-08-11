@@ -92,6 +92,8 @@ const readResource = (styleName) => {
 
 const replaceSep = (pathname) => pathname.replaceAll("/", path.sep)
 
+const replaceSepToHtml = (pathname) => pathname.replaceAll(path.sep, "/")
+
 const injectHead = (html, injected) => {
   const split = html.split(tagHeadEnd)
   return split[0] + injected + tagHeadEnd + split[1]
@@ -120,6 +122,7 @@ module.exports = {
   injectBody,
   tag,
   replaceSep,
+  replaceSepToHtml,
   logError,
   PLUGIN_NAME,
   CWD,

@@ -1,5 +1,7 @@
-const { sep } = require("path")
+const { sep, join } = require("path")
+const fs = require("fs")
 const {
+  CWD,
   addAsset,
   mapCombinator,
   arrayCombinator,
@@ -12,13 +14,15 @@ const {
   replaceSep,
   mergeDeep,
 } = require("./util")
+const { SW_FILENAME, SW_FILES_MARKER } = require("./constants")
+const { readFileSync } = require("fs")
 
 const robotsContent = `User-agent: *\nAllow: /`
 const swContent = `
 let CACHE_NAME = "cache",
   CACHE_VERSION = "v1",
   cacheId = CACHE_NAME + "-" + CACHE_VERSION,
-  urlsToCache = ["index.html", "nested1/index.html", "favicon.ico", "manifest.json", "robots.txt"]
+  urlsToCache = [${SW_FILES_MARKER}]
 
 self.addEventListener("install", (s) => {
   s.waitUntil(caches.open(cacheId).then((s) => Promise.all(urlsToCache.map((e) => s.add(e)))))
@@ -63,7 +67,7 @@ const helmetJsonDefault = {
 }
 
 const helmet = (data) =>
-  `<link href="${data.logo}" rel="icon"><link href="./manifest.json" rel="manifest"><meta content="${data.description}" name="description"><meta name="keywords" content="${data.keywords}"><meta content="${data.title}" property="og:title"><meta content="${data.imageType}" property="og:type"><meta content="${data.url}" property="og:url"><meta content="${data.logo}" property="og:image"><meta content="${data.imageAlt}" property="og:image:alt"><link href="${data.logo}" rel="apple-touch-icon"><meta content="${data.theme}" name="theme-color"><title>${data.title}</title>`
+  `<link href="${data.imageSrc}" rel="icon"><link href="./manifest.json" rel="manifest"><meta content="${data.description}" name="description"><meta name="keywords" content="${data.keywords}"><meta content="${data.title}" property="og:title"><meta content="${data.imageType}" property="og:type"><meta content="${data.url}" property="og:url"><meta content="${data.imageSrc}" property="og:image"><meta content="${data.imageAlt}" property="og:image:alt"><link href="${data.imageSrc}" rel="apple-touch-icon"><meta content="${data.theme}" name="theme-color"><title>${data.title}</title>`
 
 const compileHtmlFromTemplate = (compilation, template) => {
   template.forEach((pageName) => {
@@ -97,14 +101,14 @@ const injectRobots = (compilation) => {
 }
 
 const injectSw = (compilation) => {
-  addAsset(compilation, "service-worker.js", swContent, {}, false)
+  addAsset(compilation, SW_FILENAME, swContent, {}, false)
 }
 
 const injectImgFallback = (compilation) => {
   addAsset(compilation, "img-fallback.svg", imgFallbackContent, {}, false)
 }
 
-const injectAssets = (compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback) => {
+const injectAssets = (compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback, options) => {
   if (injectDoctype || errorOverlay) {
     injectDoctypeImpl(compilation, injectDoctype)
   }
@@ -124,6 +128,28 @@ const injectAssets = (compilation, injectDoctype, errorOverlay, manifest, robots
   if (injectImageFallback) {
     injectImgFallback(compilation)
   }
+
+  if (!options.font.inline) {
+    const fontContent = readFileSync(join(CWD, options.font.path))
+    addAsset(compilation, options.font.path, fontContent, {}, false)
+  }
+}
+
+const bytesToBase64 = (bytes) => btoa(Array.from(bytes, (byte) => String.fromCodePoint(byte)).join(""))
+
+const injectFonts = (args) => {
+  const fontContent = fs.readFileSync(join(CWD, args.path))
+  const fontPathSplit = args.path.split("/")
+  const fontFilename = fontPathSplit[fontPathSplit.length - 1]
+  return `@font-face {
+              font-family: "${args.fontFamily}";
+              font-style: ${args.fontStyle ?? "normal"};
+              font-weight: ${args.fontWeight ?? "400"};
+              font-display: ${args.fontDisplay ?? "swap"};
+              src: ${!args.isInline ? `url(./assets/media/fonts/${fontFilename})` : `url('data:font/${args.format}; base64,${bytesToBase64(Uint8Array.from(fontContent))}')`}
+              format("${args.format}");
+              }
+              body { font-family: ${args.fontFamily}${args.fontFamilyFallback ? `, ${args.fontFamilyFallback}` : ""}; font-size: 1rem; }`
 }
 
 const injectHtmlHead = (
@@ -135,13 +161,14 @@ const injectHtmlHead = (
   inlineJs,
   sharedCssContent,
   contents,
+  options,
 ) => {
   const baseName = assetName.replaceAll(sep, "-").replace(".html", "")
   const scriptName = "assets/js/" + baseName + ".js"
   const stylesheetName = "assets/css/" + baseName + ".css"
   const injectedBaseHead = injectBaseHeader ? baseHeader : ""
   const injectedHeader = header ? helmet(mergeDeep(helmetJsonDefault, header)) : ""
-  const injectedFontStyle = `@font-face{font-family:Roboto;font-style:normal;font-weight:400;font-display:swap;src:url(./assets/media/fonts/Roboto-Regular.woff2) format("woff2")}body{font-family:Roboto,sans-serif;font-size:1rem}`
+  const injectedFontStyle = injectFonts(options.font)
   const injectedStyle = inlineCss
     ? tag("style", [...sharedCssContent, ...contents, injectedFontStyle].filter(Boolean).join(" "))
     : ""
@@ -171,7 +198,6 @@ const precompile = (_compiler, compilation, options) => {
     inline: inlineCss,
     minify: minifyCss,
   } = options.css
-  const {} = options.font
   const { views: viewsJs, inline: inlineJs, minify: minifyJs, head: headJs } = options.js
   const { optimizeImages, optimizeIcons, injectImageFallback } = options.media
   const { manifest, robots, sw, errorOverlay, add, remove } = options.inject
@@ -187,7 +213,7 @@ const precompile = (_compiler, compilation, options) => {
   // inject robots
   // inject sw
   // inject image fallback
-  injectAssets(compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback)
+  injectAssets(compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback, options)
 
   // inject css
   // inject font
@@ -210,6 +236,7 @@ const precompile = (_compiler, compilation, options) => {
               inlineJs,
               sharedCssContent,
               contents,
+              options,
             )
             const nextSource = injectHtmlBody(compilation, pageName, nextSourceHead, viewsJs, inlineJs, headJs)
             finish(nextSource)
