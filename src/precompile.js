@@ -13,9 +13,11 @@ const {
   transformAsset,
   replaceSep,
   mergeDeep,
+  updateAsset,
 } = require("./util")
 const { SW_FILENAME, SW_FILES_MARKER } = require("./constants")
 const { readFileSync } = require("fs")
+const babelify = require("./lib/babelify")
 
 const robotsContent = `User-agent: *\nAllow: /`
 const swContent = `
@@ -133,6 +135,13 @@ const injectAssets = (compilation, injectDoctype, errorOverlay, manifest, robots
     const fontContent = readFileSync(join(CWD, options.font.path))
     addAsset(compilation, options.font.path, fontContent, {}, false)
   }
+
+  Object.keys(options.inject.add).forEach((assetName) => {
+    const path = options.inject.add[assetName]
+    const content = fs.readFileSync(join(CWD, path))
+    const arrBuffer = new Uint8Array(content)
+    addAsset(compilation, assetName, arrBuffer.buffer, {}, false)
+  })
 }
 
 const bytesToBase64 = (bytes) => btoa(Array.from(bytes, (byte) => String.fromCodePoint(byte)).join(""))
@@ -214,6 +223,16 @@ const precompile = (_compiler, compilation, options) => {
   // inject sw
   // inject image fallback
   injectAssets(compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback, options)
+
+  /*
+  Object.keys(compilation.assets)
+    .filter((filename) => filename.endsWith(".js"))
+    .map((filename) => {
+      const source = compilation.assets[filename].source()
+      const babelified = babelify(source)
+      updateAsset(compilation, filename, babelified)
+    })
+*/
 
   // inject css
   // inject font

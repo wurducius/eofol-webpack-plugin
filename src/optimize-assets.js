@@ -1,7 +1,9 @@
 // const fs = require("fs")
-const { addAsset, updateAsset, mapCombinator, arrayCombinator, replaceSep, replaceSepToHtml } = require("./util")
+const { join } = require("path")
+const { addAsset, updateAsset, mapCombinator, arrayCombinator, CWD, replaceSepToHtml } = require("./util")
 const { SW_FILENAME, SW_FILES_MARKER } = require("./constants")
 const minifyHtmlImpl = require("./lib/minify-html")
+const { optimizePng } = require("./lib/process-img")
 
 const removeUnusedScripts = (compilation, options) => {
   if (options.js.inline) {
@@ -43,6 +45,25 @@ const injectSwInstallFiles = (compilation, options) => {
   return new Promise((resolve) => resolve(true))
 }
 
+const optimizeImages = (compilation) => {
+  return Promise.all(
+    Object.keys(compilation.assets)
+      .filter((filename) => filename.endsWith(".png"))
+      .map((filename) => {
+        //   const oldSize = compilation.assets[filename].source().length
+        return optimizePng(join(CWD, "public", filename)).then((nextSource) => {
+          addAsset(compilation, filename, nextSource, {}, false)
+          //   const newSize = nextSource.toString().length
+          //  console.log(oldSize, newSize)
+
+          //  console.log(`Size diffrence for ${filename} -> ${oldSize - newSize}`)
+          // console.log(compilation.assets)
+          return new Promise((resolve) => resolve(true))
+        })
+      }),
+  )
+}
+
 const minify = (compilation, options) => {
   if (options.html.minify) {
     return Promise.all(
@@ -81,7 +102,9 @@ const optimizeAssets = (_compiler, compilation, options) => {
   const { manifest, robots, sw, errorOverlay, add, remove } = options.inject
 
   removeUnusedScripts(compilation, options)
-  return injectSwInstallFiles(compilation, options).then(() => minify(compilation, options))
+  return injectSwInstallFiles(compilation, options)
+    .then(() => optimizeImages(compilation))
+    .then(() => minify(compilation, options))
 }
 
 module.exports = optimizeAssets
