@@ -3,7 +3,7 @@ const { join } = require("path")
 const { addAsset, updateAsset, mapCombinator, arrayCombinator, CWD, replaceSepToHtml } = require("./util")
 const { SW_FILENAME, SW_FILES_MARKER } = require("./constants")
 const minifyHtmlImpl = require("./lib/minify-html")
-const { optimizePng } = require("./lib/process-img")
+const { optimizePng, optimizeJpg, optimizeGif, optimizeSvg } = require("./lib/process-img")
 
 const removeUnusedScripts = (compilation, options) => {
   if (options.js.inline) {
@@ -46,22 +46,39 @@ const injectSwInstallFiles = (compilation, options) => {
 }
 
 const optimizeImages = (compilation) => {
-  return Promise.all(
-    Object.keys(compilation.assets)
+  return Promise.all([
+    ...Object.keys(compilation.assets)
       .filter((filename) => filename.endsWith(".png"))
       .map((filename) => {
-        //   const oldSize = compilation.assets[filename].source().length
         return optimizePng(join(CWD, "public", filename)).then((nextSource) => {
           addAsset(compilation, filename, nextSource, {}, false)
-          //   const newSize = nextSource.toString().length
-          //  console.log(oldSize, newSize)
-
-          //  console.log(`Size diffrence for ${filename} -> ${oldSize - newSize}`)
-          // console.log(compilation.assets)
           return new Promise((resolve) => resolve(true))
         })
       }),
-  )
+    ...Object.keys(compilation.assets)
+      .filter((filename) => filename.endsWith(".jpg") || filename.endsWith(".jpeg"))
+      .map((filename) => {
+        return optimizeJpg(join(CWD, "public", filename)).then((nextSource) => {
+          addAsset(compilation, filename, nextSource, {}, false)
+          return new Promise((resolve) => resolve(true))
+        })
+      }),
+    ...Object.keys(compilation.assets)
+      .filter((filename) => filename.endsWith(".gif"))
+      .map((filename) => {
+        return optimizeGif(join(CWD, "public", filename)).then((nextSource) => {
+          addAsset(compilation, filename, nextSource, {}, false)
+          return new Promise((resolve) => resolve(true))
+        })
+      }),
+    ...Object.keys(compilation.assets)
+      .filter((filename) => filename.endsWith(".svg"))
+      .map((filename) => {
+        const nextSource = optimizeSvg(join(CWD, "public", filename))
+        addAsset(compilation, filename, nextSource, {}, false)
+        return new Promise((resolve) => resolve(true))
+      }),
+  ])
 }
 
 const minify = (compilation, options) => {

@@ -133,7 +133,8 @@ const injectAssets = (compilation, injectDoctype, errorOverlay, manifest, robots
 
   if (!options.font.inline) {
     const fontContent = readFileSync(join(CWD, options.font.path))
-    addAsset(compilation, options.font.path, fontContent, {}, false)
+    const fontSplit = options.font.path.split("/")
+    addAsset(compilation, join("assets", "media", "fonts", fontSplit[fontSplit.length - 1]), fontContent, {}, false)
   }
 
   Object.keys(options.inject.add).forEach((assetName) => {
@@ -224,15 +225,13 @@ const precompile = (_compiler, compilation, options) => {
   // inject image fallback
   injectAssets(compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback, options)
 
-  /*
   Object.keys(compilation.assets)
-    .filter((filename) => filename.endsWith(".js"))
+    .filter((filename) => filename.endsWith(".js") && filename !== SW_FILENAME)
     .map((filename) => {
       const source = compilation.assets[filename].source()
-      const babelified = babelify(source)
+      const babelified = babelify(source.toString()).code
       updateAsset(compilation, filename, babelified)
     })
-*/
 
   // inject css
   // inject font
