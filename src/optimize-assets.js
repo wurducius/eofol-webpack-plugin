@@ -22,27 +22,11 @@ const injectSwInstallFiles = (compilation, options) => {
   if (options.inject.sw) {
     const swContent = compilation.assets[SW_FILENAME]
     const swAssets = Object.keys(compilation.assets)
-
-    /*
-    return fs.promises.readdir(publicPath, { recursive: true }).then((dir) => {
-      const swFiles = [...swAssets, ...dir.filter((file) => file.includes("."))].map(replaceSep)
-      const swInject = `"${swFiles.join('", "')}"`
-      const nextSource = swContent.toString().replaceAll(SW_FILES_MARKER, swInject)
-      updateAsset(compilation, SW_FILENAME, nextSource)
-    })
-    */
-
     const swFiles = swAssets.filter((filename) => filename !== SW_FILENAME).map(replaceSepToHtml)
     const swInject = `"${swFiles.join('", "')}"`
     const nextSource = swContent.source().replaceAll(SW_FILES_MARKER, swInject)
-    // Use updateAsset preferably
     addAsset(compilation, SW_FILENAME, nextSource, {}, true)
-    return new Promise((resolve) => resolve(true))
-  } else {
-    return new Promise((resolve) => resolve(true))
   }
-
-  return new Promise((resolve) => resolve(true))
 }
 
 const optimizeImages = (compilation) => {
@@ -119,9 +103,8 @@ const optimizeAssets = (_compiler, compilation, options) => {
   const { manifest, robots, sw, errorOverlay, add, remove } = options.inject
 
   removeUnusedScripts(compilation, options)
-  return injectSwInstallFiles(compilation, options)
-    .then(() => optimizeImages(compilation))
-    .then(() => minify(compilation, options))
+  injectSwInstallFiles(compilation, options)
+  return optimizeImages(compilation).then(() => minify(compilation, options))
 }
 
 module.exports = optimizeAssets

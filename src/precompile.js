@@ -18,6 +18,7 @@ const {
 const { SW_FILENAME, SW_FILES_MARKER } = require("./constants")
 const { readFileSync } = require("fs")
 const babelify = require("./lib/babelify")
+const path = require("path")
 
 const robotsContent = `User-agent: *\nAllow: /`
 const swContent = `
@@ -196,6 +197,18 @@ const injectHtmlBody = (compilation, pageName, source, viewsJs, inlineJs, headJs
   return injectBody(source, injectedBody)
 }
 
+const babelifyImpl = (compilation, options) => {
+  if (options.js.babelify) {
+    Object.keys(compilation.assets)
+      .filter((filename) => filename.endsWith(".js") && filename !== SW_FILENAME)
+      .map((filename) => {
+        const source = compilation.assets[filename].source()
+        const babelified = babelify(source.toString()).code
+        updateAsset(compilation, filename, babelified)
+      })
+  }
+}
+
 // and and remove assets
 // create directories
 const precompile = (_compiler, compilation, options) => {
@@ -212,6 +225,13 @@ const precompile = (_compiler, compilation, options) => {
   const { optimizeImages, optimizeIcons, injectImageFallback } = options.media
   const { manifest, robots, sw, errorOverlay, add, remove } = options.inject
 
+  fs.readdirSync(join(CWD, "public"), { recursive: true })
+    .filter((filename) => filename.endsWith(".html"))
+    .forEach((pageName) => {
+      const content = fs.readFileSync(join(CWD, "public", pageName)).toString()
+      addAsset(compilation, pageName, content, {}, false)
+    })
+
   // compile html from template
   if (template.length > 0) {
     compileHtmlFromTemplate(compilation, template)
@@ -225,13 +245,7 @@ const precompile = (_compiler, compilation, options) => {
   // inject image fallback
   injectAssets(compilation, injectDoctype, errorOverlay, manifest, robots, sw, injectImageFallback, options)
 
-  Object.keys(compilation.assets)
-    .filter((filename) => filename.endsWith(".js") && filename !== SW_FILENAME)
-    .map((filename) => {
-      const source = compilation.assets[filename].source()
-      const babelified = babelify(source.toString()).code
-      updateAsset(compilation, filename, babelified)
-    })
+  babelifyImpl(compilation, options)
 
   // inject css
   // inject font
