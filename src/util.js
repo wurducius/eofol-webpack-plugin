@@ -29,13 +29,28 @@ const addAsset = (compilation, assetName, nextSource, info, merge) => {
   })
 }
 
+const updateAsset = (compilation, assetName, nextSource) => {
+  compilation.updateAsset(assetName, {
+    source: () => nextSource,
+    size: () => nextSource.length,
+  })
+}
+
 const transformAsset = (compilation, assetName) => {
   const asset = compilation.assets[assetName]
   const source = asset.source()
-  const finish = (nextSource) => {
-    addAsset(compilation, assetName, nextSource, asset.info, true)
-  }
+  const finish = (nextSource) => updateAsset(compilation, assetName, nextSource)
   return { assetName, asset, source, finish }
+}
+
+function arrayCombinator(items, handler) {
+  if (Array.isArray(items)) {
+    items.forEach((item, index) => {
+      handler(item, index)
+    })
+  } else if (items) {
+    handler(items, undefined)
+  }
 }
 
 const mapCombinator = (items, mapper) => {
@@ -77,9 +92,16 @@ const readResource = (styleName) => {
 
 const replaceSep = (pathname) => pathname.replaceAll("/", path.sep)
 
+const replaceSepToHtml = (pathname) => pathname.replaceAll(path.sep, "/")
+
 const injectHead = (html, injected) => {
   const split = html.split(tagHeadEnd)
   return split[0] + injected + tagHeadEnd + split[1]
+}
+
+const injectBody = (html, injected) => {
+  const split = html.split("</body>")
+  return split[0] + injected + "</body>" + split[1]
 }
 
 const tag = (tagName, content) => `<${tagName}>${content}</${tagName}>`
@@ -90,13 +112,17 @@ const logError = (msg) => (ex) => {
 
 module.exports = {
   addAsset,
+  updateAsset,
   transformAsset,
+  arrayCombinator,
   mapCombinator,
   mergeDeep,
   readResource,
   injectHead,
+  injectBody,
   tag,
   replaceSep,
+  replaceSepToHtml,
   logError,
   PLUGIN_NAME,
   CWD,

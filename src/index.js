@@ -22,14 +22,14 @@ const onRunStarted = (compiler, options) => (compilation) => {
   )
 }
 
-const onCompilationFinished = (compiler) => (compilation) => {
+const onCompilationFinished = (compiler, options) => (compilation) => {
   compilation.hooks.processAssets.tapPromise(
     {
       name: PLUGIN_NAME,
       //   stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE,
       additionalAssets: true,
     },
-    (compiler) => optimizeAssets(compiler, compilation),
+    async (compiler) => optimizeAssets(compiler, compilation, options),
   )
 }
 
@@ -48,7 +48,6 @@ const optionsDefault = {
     injectViews: {},
     injectShared: [],
     inline: true,
-    minify: true,
   },
   font: {
     path: "resources/Roboto-Regular.woff2",
@@ -62,7 +61,8 @@ const optionsDefault = {
   },
   js: {
     inline: false,
-    minify: true,
+    head: true,
+    babelify: false,
   },
   media: {
     optimizeImages: true,
@@ -77,8 +77,6 @@ const optionsDefault = {
     add: {},
     remove: {},
   },
-  createDirectories: [],
-  compress: false,
 }
 
 class EofolWebpackPlugin {
@@ -89,7 +87,7 @@ class EofolWebpackPlugin {
   apply(compiler) {
     compiler.hooks.thisCompilation.tap(PLUGIN_NAME, onInitCompilation(compiler, this.options))
     compiler.hooks.run.tap(PLUGIN_NAME, onRunStarted(compiler, this.options))
-    compiler.hooks.compilation.tap(PLUGIN_NAME, onCompilationFinished(compiler))
+    compiler.hooks.compilation.tap(PLUGIN_NAME, onCompilationFinished(compiler, this.options))
   }
 }
 
