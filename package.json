@@ -1,6 +1,6 @@
 {
   "name": "eofol-webpack-plugin",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Webpack plugin for web framework Eofol",
   "license": "MIT",
   "author": "Jakub Eliáš <wurducius@gmail.com>",
