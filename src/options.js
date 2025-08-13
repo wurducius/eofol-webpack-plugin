@@ -45,6 +45,15 @@ const optionsDefault = {
     add: {},
     remove: [],
   },
+  theme: "#ff0000",
+  icon: undefined,
+  manifest: {
+    shortName: "short-name",
+    name: "name",
+    startUrl: ".",
+    display: "standalone",
+    bgColor: "#000000",
+  },
 }
 
 module.exports = optionsDefault

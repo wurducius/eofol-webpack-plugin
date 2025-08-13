@@ -37,8 +37,12 @@ const injectDoctypeImpl = (compilation, options) => {
 
 const injectManifest = (compilation, options) => {
   if (options.inject.manifest) {
-    addAsset(compilation, "manifest.json", JSON.stringify(generateManifest({})), {}, false)
-    addAsset(compilation, "favicon.ico", faviconContentDefault, {}, false)
+    return generateManifest(compilation, options).then((generatedManifest) => {
+      addAsset(compilation, "manifest.json", JSON.stringify(generatedManifest), {}, false)
+      addAsset(compilation, "favicon.ico", faviconContentDefault, {}, false)
+    })
+  } else {
+    return new Promise((resolve) => resolve(true))
   }
 }
 
@@ -81,12 +85,12 @@ const injectFontFile = (compilation, options) => {
 
 const injectAssets = (compilation, options) => {
   injectDoctypeImpl(compilation, options)
-  injectManifest(compilation, options)
   injectRobots(compilation, options)
   injectSw(compilation, options)
   injectImgFallback(compilation, options)
   injectFontFile(compilation, options)
   addArbitraryAssets(compilation, options)
+  return injectManifest(compilation, options)
 }
 
 module.exports = injectAssets
