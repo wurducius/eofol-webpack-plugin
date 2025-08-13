@@ -1,14 +1,16 @@
 const { join } = require("path")
-const { readFileSync } = require("fs")
+const {
+  promises: { readFile },
+} = require("fs")
 const { CWD } = require("../util")
 
 const bytesToBase64 = (bytes) => btoa(Array.from(bytes, (byte) => String.fromCodePoint(byte)).join(""))
 
 const injectFonts = (args) => {
-  const fontContent = readFileSync(join(CWD, args.path))
-  const fontPathSplit = args.path.split("/")
-  const fontFilename = fontPathSplit[fontPathSplit.length - 1]
-  return `@font-face {
+  return readFile(join(CWD, args.path)).then((fontContent) => {
+    const fontPathSplit = args.path.split("/")
+    const fontFilename = fontPathSplit[fontPathSplit.length - 1]
+    return `@font-face {
               font-family: "${args.fontFamily}";
               font-style: ${args.fontStyle ?? "normal"};
               font-weight: ${args.fontWeight ?? "400"};
@@ -17,6 +19,7 @@ const injectFonts = (args) => {
               format("${args.format}");
               }
               ${args.primary ? `body { font-family: ${args.fontFamily}${args.fontFamilyFallback ? `, ${args.fontFamilyFallback}` : ""}; font-size: 1rem; }` : ""}`
+  })
 }
 
 module.exports = injectFonts
