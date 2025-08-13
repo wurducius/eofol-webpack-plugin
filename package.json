@@ -1,6 +1,6 @@
 {
   "name": "eofol-webpack-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Webpack plugin for web framework Eofol",
   "license": "MIT",
   "author": "Jakub Eliáš <wurducius@gmail.com>",
@@ -15,9 +15,9 @@
   "dependencies": {
     "@babel/core": "7.28.0",
     "html-minifier-terser": "7.2.0",
+    "ico-packer": "1.0.0",
     "sharp": "0.34.3",
-    "svgo": "4.0.0",
-    "to-ico": "^1.1.5"
+    "svgo": "4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "9.32.0",
