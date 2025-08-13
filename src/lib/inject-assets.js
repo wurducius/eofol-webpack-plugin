@@ -1,6 +1,6 @@
 const { join } = require("path")
 const { readFileSync } = require("fs")
-const { CWD, addAsset, transformAsset, arrayCombinator } = require("../util")
+const { CWD, addAsset, arrayCombinator, updateAsset } = require("../util")
 const { SW_FILENAME, SW_FILES_MARKER } = require("../constants")
 const generateManifest = require("./generate-manifest")
 
@@ -27,9 +27,9 @@ const injectDoctypeImpl = (compilation, options) => {
       .filter((assetName) => assetName.endsWith(".html"))
       .forEach((pageName) => {
         if (options.html.injectDoctype) {
-          const { source, finish } = transformAsset(compilation, pageName)
+          const source = compilation.assets[pageName].source()
           const nextSource = `${doctype}${source}`
-          finish(nextSource)
+          updateAsset(compilation, pageName, nextSource)
         }
       })
   }

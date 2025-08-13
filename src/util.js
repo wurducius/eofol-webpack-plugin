@@ -39,13 +39,6 @@ const updateAsset = (compilation, assetName, nextSource) => {
   })
 }
 
-const transformAsset = (compilation, assetName) => {
-  const asset = compilation.assets[assetName]
-  const source = asset.source()
-  const finish = (nextSource) => updateAsset(compilation, assetName, nextSource)
-  return { assetName, asset, source, finish }
-}
-
 function arrayCombinator(items, handler) {
   if (Array.isArray(items)) {
     items.forEach((item, index) => {
@@ -97,6 +90,8 @@ const replaceSep = (pathname) => pathname.replaceAll("/", sep)
 
 const replaceSepToHtml = (pathname) => pathname.replaceAll(sep, "/")
 
+const replaceSepToDash = (assetName) => assetName.replaceAll(sep, "-")
+
 const injectHead = (html, injected) => {
   const split = html.split(tagHeadEnd)
   return split[0] + injected + tagHeadEnd + split[1]
@@ -116,7 +111,6 @@ const logError = (msg) => (ex) => {
 module.exports = {
   addAsset,
   updateAsset,
-  transformAsset,
   arrayCombinator,
   mapCombinator,
   mergeDeep,
@@ -126,6 +120,7 @@ module.exports = {
   tag,
   replaceSep,
   replaceSepToHtml,
+  replaceSepToDash,
   logError,
   PLUGIN_NAME,
   CWD,

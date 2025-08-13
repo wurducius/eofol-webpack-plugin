@@ -1,5 +1,4 @@
-const { sep } = require("path")
-const { mapCombinator, readResource, transformAsset, replaceSep } = require("./util")
+const { mapCombinator, readResource, replaceSep, replaceSepToDash, updateAsset } = require("./util")
 const injectAssets = require("./lib/inject-assets")
 const compileHtmlFromTemplate = require("./lib/template")
 const injectHtmlHead = require("./lib/inject-head")
@@ -17,11 +16,11 @@ const precompile = (_compiler, compilation, options) => {
       Object.keys(options.css.views).map((pageName) => {
         const assetName = `${replaceSep(pageName)}.html`
         return Promise.all(mapCombinator(options.css.views[pageName], readResource)).then((contents) => {
-          const { source, finish } = transformAsset(compilation, assetName)
-          const baseName = assetName.replaceAll(sep, "-").replace(".html", "")
+          const source = compilation.assets[assetName].source()
+          const baseName = replaceSepToDash(assetName).replace(".html", "")
           const nextSourceHead = injectHtmlHead(pageName, baseName, source, contents, sharedCssContent, options)
           const nextSource = injectHtmlBody(compilation, baseName, pageName, nextSourceHead, options)
-          finish(nextSource)
+          updateAsset(compilation, assetName, nextSource)
         })
       }),
     ),
