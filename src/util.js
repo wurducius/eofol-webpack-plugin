@@ -1,5 +1,8 @@
-const path = require("path")
-const fs = require("fs")
+const { sep, resolve } = require("path")
+const {
+  existsSync,
+  promises: { readFile },
+} = require("fs")
 
 const CWD = process.cwd()
 const tagHeadEnd = "</head>"
@@ -82,17 +85,17 @@ const mergeDeep = (...objects) => {
 }
 
 const readResource = (styleName) => {
-  const filename = path.resolve(CWD, styleName)
-  const exists = fs.existsSync(filename)
+  const filename = resolve(CWD, styleName)
+  const exists = existsSync(filename)
   if (!exists) {
     throw new Error(`File not found: ${styleName}`)
   }
-  return fs.promises.readFile(filename, "utf-8").then((buffer) => buffer.toString())
+  return readFile(filename, "utf-8").then((buffer) => buffer.toString())
 }
 
-const replaceSep = (pathname) => pathname.replaceAll("/", path.sep)
+const replaceSep = (pathname) => pathname.replaceAll("/", sep)
 
-const replaceSepToHtml = (pathname) => pathname.replaceAll(path.sep, "/")
+const replaceSepToHtml = (pathname) => pathname.replaceAll(sep, "/")
 
 const injectHead = (html, injected) => {
   const split = html.split(tagHeadEnd)

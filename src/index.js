@@ -1,6 +1,7 @@
 const precompile = require("./precompile")
 const optimizeAssets = require("./optimize-assets")
 const { PLUGIN_NAME, mergeDeep } = require("./util")
+const optionsDefault = require("./options")
 
 const onInitCompilation = (compiler, options) => (compilation) => {
   compilation.hooks.processAssets.tapPromise(
@@ -31,52 +32,6 @@ const onCompilationFinished = (compiler, options) => (compilation) => {
     },
     async (compiler) => optimizeAssets(compiler, compilation, options),
   )
-}
-
-const optionsDefault = {
-  html: {
-    template: [],
-    header: {},
-    injectBaseHeader: true,
-    injectDoctype: true,
-    minify: true,
-    babelize: false,
-  },
-  css: {
-    views: {},
-    shared: [],
-    injectViews: {},
-    injectShared: [],
-    inline: true,
-  },
-  font: {
-    path: "resources/Roboto-Regular.woff2",
-    fontFamily: "Roboto",
-    fontFamilyFallback: "sans-serif",
-    format: "woff2",
-    fontStyle: "normal",
-    fontWeight: 400,
-    fontDisplay: "swap",
-    inline: false,
-  },
-  js: {
-    inline: false,
-    head: true,
-    babelify: false,
-  },
-  media: {
-    optimizeImages: true,
-    optimizeIcons: true,
-    injectImageFallback: false,
-  },
-  inject: {
-    manifest: true,
-    robots: true,
-    sw: true,
-    errorOverlay: false,
-    add: {},
-    remove: {},
-  },
 }
 
 class EofolWebpackPlugin {
