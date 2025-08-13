@@ -1,16 +1,23 @@
 {
   "name": "eofol-webpack-plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Webpack plugin for web framework Eofol",
   "license": "MIT",
   "author": "Jakub Eliáš <wurducius@gmail.com>",
   "type": "commonjs",
   "main": "src/index.js",
+  "scripts": {
+    "check": "npx eslint -c eslint.config.mjs .",
+    "check-fix": "npx eslint -c eslint.config.mjs --fix .",
+    "prettify": "npx prettier . --write",
+    "lint": "npm run check-fix && npm run prettify"
+  },
   "dependencies": {
     "@babel/core": "7.28.0",
     "html-minifier-terser": "7.2.0",
     "sharp": "0.34.3",
-    "svgo": "4.0.0"
+    "svgo": "4.0.0",
+    "to-ico": "^1.1.5"
   },
   "devDependencies": {
     "@eslint/js": "9.32.0",

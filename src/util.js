@@ -1,5 +1,8 @@
-const path = require("path")
-const fs = require("fs")
+const { sep, resolve } = require("path")
+const {
+  existsSync,
+  promises: { readFile },
+} = require("fs")
 
 const CWD = process.cwd()
 const tagHeadEnd = "</head>"
@@ -34,13 +37,6 @@ const updateAsset = (compilation, assetName, nextSource) => {
     source: () => nextSource,
     size: () => nextSource.length,
   })
-}
-
-const transformAsset = (compilation, assetName) => {
-  const asset = compilation.assets[assetName]
-  const source = asset.source()
-  const finish = (nextSource) => updateAsset(compilation, assetName, nextSource)
-  return { assetName, asset, source, finish }
 }
 
 function arrayCombinator(items, handler) {
@@ -82,17 +78,19 @@ const mergeDeep = (...objects) => {
 }
 
 const readResource = (styleName) => {
-  const filename = path.resolve(CWD, styleName)
-  const exists = fs.existsSync(filename)
+  const filename = resolve(CWD, styleName)
+  const exists = existsSync(filename)
   if (!exists) {
     throw new Error(`File not found: ${styleName}`)
   }
-  return fs.promises.readFile(filename, "utf-8").then((buffer) => buffer.toString())
+  return readFile(filename, "utf-8").then((buffer) => buffer.toString())
 }
 
-const replaceSep = (pathname) => pathname.replaceAll("/", path.sep)
+const replaceSep = (pathname) => pathname.replaceAll("/", sep)
 
-const replaceSepToHtml = (pathname) => pathname.replaceAll(path.sep, "/")
+const replaceSepToHtml = (pathname) => pathname.replaceAll(sep, "/")
+
+const replaceSepToDash = (assetName) => assetName.replaceAll(sep, "-")
 
 const injectHead = (html, injected) => {
   const split = html.split(tagHeadEnd)
@@ -101,19 +99,18 @@ const injectHead = (html, injected) => {
 
 const injectBody = (html, injected) => {
   const split = html.split("</body>")
-  return split[0] + injected + "</body>" + split[1]
+  return `${split[0] + injected}</body>${split[1]}`
 }
 
 const tag = (tagName, content) => `<${tagName}>${content}</${tagName}>`
 
 const logError = (msg) => (ex) => {
-  console.error(PLUGIN_NAME + ": Error during " + msg + ": ", ex)
+  console.error(`${PLUGIN_NAME}: Error during ${msg}: `, ex)
 }
 
 module.exports = {
   addAsset,
   updateAsset,
-  transformAsset,
   arrayCombinator,
   mapCombinator,
   mergeDeep,
@@ -123,6 +120,7 @@ module.exports = {
   tag,
   replaceSep,
   replaceSepToHtml,
+  replaceSepToDash,
   logError,
   PLUGIN_NAME,
   CWD,
