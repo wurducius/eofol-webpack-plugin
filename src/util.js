@@ -101,13 +101,13 @@ const injectHead = (html, injected) => {
 
 const injectBody = (html, injected) => {
   const split = html.split("</body>")
-  return split[0] + injected + "</body>" + split[1]
+  return `${split[0] + injected}</body>${split[1]}`
 }
 
 const tag = (tagName, content) => `<${tagName}>${content}</${tagName}>`
 
 const logError = (msg) => (ex) => {
-  console.error(PLUGIN_NAME + ": Error during " + msg + ": ", ex)
+  console.error(`${PLUGIN_NAME}: Error during ${msg}: `, ex)
 }
 
 module.exports = {

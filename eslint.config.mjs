@@ -1,6 +1,6 @@
 import globals from "globals"
 import pluginJs from "@eslint/js"
-import tseslint from "typescript-eslint"
+// import tseslint from "typescript-eslint"
 
 const ignores = ["build/**/*.js", "node_modules/**/*.js", ".idea/**/*", "test/**/*", "dist/**/*", "project/**/*.js"]
 
@@ -17,5 +17,5 @@ export default [
   { files: ["**/*.js"], languageOptions: { sourceType: "script" }, ignores },
   { languageOptions: { globals: { ...globals.browser, ...globals.node, NodeJS: true } }, ignores },
   { ...pluginJs.configs.recommended, ignores },
-  { ...tseslint.configs.base, ignores },
+  //  { ...tseslint.configs.base, ignores },
 ]

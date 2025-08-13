@@ -6,6 +6,12 @@
   "author": "Jakub Eliáš <wurducius@gmail.com>",
   "type": "commonjs",
   "main": "src/index.js",
+  "scripts": {
+    "check": "npx eslint -c eslint.config.mjs .",
+    "check-fix": "npx eslint -c eslint.config.mjs --fix .",
+    "prettify": "npx prettier . --write",
+    "lint": "npm run check-fix && npm run prettify"
+  },
   "dependencies": {
     "@babel/core": "7.28.0",
     "html-minifier-terser": "7.2.0",

@@ -90,6 +90,7 @@ const optimizeAssets = (_compiler, compilation, options) => {
   // const views = options.views
   // const shared = options.shared ?? []
 
+  /*
   const { template, header, injectBaseHeader, injectDoctype, minify: minifyHtml, babelize } = options.html
   const {
     views,
@@ -101,6 +102,7 @@ const optimizeAssets = (_compiler, compilation, options) => {
   } = options.css
   const { views: viewsJs, inline: inlineJs, minify: minifyJs, head: headJs } = options.js
   const { manifest, robots, sw, errorOverlay, add, remove } = options.inject
+*/
 
   removeUnusedScripts(compilation, options)
   injectSwInstallFiles(compilation, options)
