@@ -7,24 +7,29 @@ const babelify = require("./lib/babelify")
 const injectViews = require("./lib/inject-views")
 
 const precompile = (_compiler, compilation, options) => {
-  injectViews(compilation)
-  compileHtmlFromTemplate(compilation, options)
-  injectAssets(compilation, options)
-  babelify(compilation, options)
-  return Promise.all(mapCombinator(options.css.shared, readResource)).then((sharedCssContent) =>
-    Promise.all(
-      Object.keys(options.css.views).map((pageName) => {
-        const assetName = `${replaceSep(pageName)}.html`
-        return Promise.all(mapCombinator(options.css.views[pageName], readResource)).then((contents) => {
-          const source = compilation.assets[assetName].source()
-          const baseName = replaceSepToDash(assetName).replace(".html", "")
-          const nextSourceHead = injectHtmlHead(pageName, baseName, source, contents, sharedCssContent, options)
-          const nextSource = injectHtmlBody(compilation, baseName, pageName, nextSourceHead, options)
-          updateAsset(compilation, assetName, nextSource)
-        })
-      }),
-    ),
-  )
+  return injectViews(compilation).then(() => {
+    compileHtmlFromTemplate(compilation, options)
+    injectAssets(compilation, options)
+    return babelify(compilation, options).then(() =>
+      Promise.all(mapCombinator(options.css.shared, readResource)).then((sharedCssContent) =>
+        Promise.all(
+          Object.keys(options.css.views).map((pageName) => {
+            const assetName = `${replaceSep(pageName)}.html`
+            return Promise.all(mapCombinator(options.css.views[pageName], readResource)).then((contents) => {
+              const source = compilation.assets[assetName].source()
+              const baseName = replaceSepToDash(assetName).replace(".html", "")
+              return injectHtmlHead(pageName, baseName, source, contents, sharedCssContent, options).then(
+                (nextSourceHead) => {
+                  const nextSource = injectHtmlBody(compilation, baseName, pageName, nextSourceHead, options)
+                  updateAsset(compilation, assetName, nextSource)
+                },
+              )
+            })
+          }),
+        ),
+      ),
+    )
+  })
 }
 
 module.exports = precompile

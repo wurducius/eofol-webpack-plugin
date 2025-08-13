@@ -1,14 +1,21 @@
 const { join } = require("path")
-const { readFileSync, readdirSync } = require("fs")
+const {
+  promises: { readFile, readdir },
+} = require("fs")
 const { CWD, addAsset } = require("../util")
 
 const injectViews = (compilation) => {
-  readdirSync(join(CWD, "public"), { recursive: true })
-    .filter((filename) => filename.endsWith(".html"))
-    .forEach((pageName) => {
-      const content = readFileSync(join(CWD, "public", pageName)).toString()
-      addAsset(compilation, pageName, content, {}, false)
-    })
+  return readdir(join(CWD, "public"), { recursive: true }).then((dir) => {
+    return Promise.all(
+      dir
+        .filter((filename) => filename.endsWith(".html"))
+        .map((pageName) => {
+          return readFile(join(CWD, "public", pageName)).then((content) => {
+            addAsset(compilation, pageName, content.toString(), {}, false)
+          })
+        }),
+    )
+  })
 }
 
 module.exports = injectViews

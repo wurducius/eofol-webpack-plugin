@@ -3,12 +3,15 @@ const { addAsset, CWD } = require("../util")
 const { optimizePng, optimizeJpg, optimizeGif, optimizeSvg } = require("./process-img")
 
 const optimizeIcons = (compilation) => {
-  Object.keys(compilation.assets)
-    .filter((filename) => filename.endsWith(".svg"))
-    .forEach((filename) => {
-      const nextSource = optimizeSvg(join(CWD, "public", filename))
-      addAsset(compilation, filename, nextSource, {}, false)
-    })
+  return Promise.all(
+    Object.keys(compilation.assets)
+      .filter((filename) => filename.endsWith(".svg"))
+      .map((filename) => {
+        return optimizeSvg(join(CWD, "public", filename)).then((nextSource) => {
+          addAsset(compilation, filename, nextSource, {}, false)
+        })
+      }),
+  )
 }
 
 const optimizeImages = (compilation) =>
@@ -40,8 +43,7 @@ const optimizeImages = (compilation) =>
   ])
 
 const optimizeImagesAndIcons = (compilation) => {
-  optimizeIcons(compilation)
-  return optimizeImages(compilation)
+  return Promise.all([optimizeImages(compilation), optimizeIcons(compilation)])
 }
 
 module.exports = optimizeImagesAndIcons

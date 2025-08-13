@@ -1,6 +1,8 @@
 const { join } = require("path")
-const { readFileSync } = require("fs")
-const { CWD, addAsset, arrayCombinator, updateAsset } = require("../util")
+const {
+  promises: { readFile },
+} = require("fs")
+const { CWD, addAsset, arrayCombinator, updateAsset, mapCombinator } = require("../util")
 const { SW_FILENAME, SW_FILES_MARKER } = require("../constants")
 const generateManifest = require("./generate-manifest")
 const generateFavicon = require("./generate-favicon")
@@ -64,22 +66,34 @@ const injectImgFallback = (compilation, options) => {
 }
 
 const addArbitraryAssets = (compilation, options) => {
-  Object.keys(options.inject.add).forEach((assetName) => {
-    const path = options.inject.add[assetName]
-    const content = readFileSync(join(CWD, path))
-    const arrBuffer = new Uint8Array(content)
-    addAsset(compilation, assetName, arrBuffer.buffer, {}, false)
-  })
+  return Promise.all(
+    Object.keys(options.inject.add).map((assetName) => {
+      const path = options.inject.add[assetName]
+      return readFile(join(CWD, path)).then((content) => {
+        const arrBuffer = new Uint8Array(content)
+        addAsset(compilation, assetName, arrBuffer.buffer, {}, false)
+      })
+    }),
+  )
 }
 
 const injectFontFile = (compilation, options) => {
-  arrayCombinator(options.font, (fontArgs) => {
-    if (!fontArgs.inline) {
-      const fontContent = readFileSync(join(CWD, options.font.path))
-      const fontSplit = fontArgs.path.split("/")
-      addAsset(compilation, join("assets", "media", "fonts", fontSplit[fontSplit.length - 1]), fontContent, {}, false)
-    }
-  })
+  return Promise.all(
+    mapCombinator(options.font, (fontArgs) => {
+      if (!fontArgs.inline) {
+        readFile(join(CWD, options.font.path)).then((fontContent) => {
+          const fontSplit = fontArgs.path.split("/")
+          addAsset(
+            compilation,
+            join("assets", "media", "fonts", fontSplit[fontSplit.length - 1]),
+            fontContent,
+            {},
+            false,
+          )
+        })
+      }
+    }),
+  )
 }
 
 const injectAssets = (compilation, options) => {
@@ -87,9 +101,11 @@ const injectAssets = (compilation, options) => {
   injectRobots(compilation, options)
   injectSw(compilation, options)
   injectImgFallback(compilation, options)
-  injectFontFile(compilation, options)
-  addArbitraryAssets(compilation, options)
-  return injectManifest(compilation, options)
+  return Promise.all([
+    injectFontFile(compilation, options),
+    addArbitraryAssets(compilation, options),
+    injectManifest(compilation, options),
+  ])
 }
 
 module.exports = injectAssets

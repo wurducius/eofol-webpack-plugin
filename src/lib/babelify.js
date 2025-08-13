@@ -4,17 +4,21 @@ const babel = require("@babel/core")
 
 const babelOptions = {}
 
-const babelifyImpl = (source) => babel.transformSync(source, babelOptions)
+const babelifyImpl = (source) => babel.transform(source, babelOptions)
 
 const babelify = (compilation, options) => {
   if (options.js.babelify) {
-    Object.keys(compilation.assets)
-      .filter((filename) => filename.endsWith(".js") && filename !== SW_FILENAME)
-      .forEach((filename) => {
-        const source = compilation.assets[filename].source()
-        const babelified = babelifyImpl(source.toString()).code
-        updateAsset(compilation, filename, babelified)
-      })
+    return Promise.all(
+      Object.keys(compilation.assets)
+        .filter((filename) => filename.endsWith(".js") && filename !== SW_FILENAME)
+        .map((filename) => {
+          const source = compilation.assets[filename].source()
+          const babelified = babelifyImpl(source.toString()).code
+          updateAsset(compilation, filename, babelified)
+        }),
+    )
+  } else {
+    return new Promise((resolve) => resolve(true))
   }
 }
 

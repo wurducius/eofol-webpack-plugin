@@ -1,4 +1,6 @@
-const { readFileSync } = require("fs")
+const {
+  promises: { readFile },
+} = require("fs")
 const sharp = require("sharp")
 const svgo = require("svgo")
 
@@ -27,6 +29,10 @@ const optimizePng = processGeneral((x) => x.png(pngOptions))
 
 const optimizeGif = processGeneral((x) => x.gif(gifOptions))
 
-const optimizeSvg = (filePath) => svgo.optimize(readFileSync(filePath).toString(), svgOptions(filePath)).data
+const optimizeSvg = (filePath) => {
+  return readFile(filePath).then((content) => {
+    return svgo.optimize(content.toString(), svgOptions(filePath)).data
+  })
+}
 
 module.exports = { optimizePng, optimizeJpg, optimizeGif, optimizeSvg }
