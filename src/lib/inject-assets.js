@@ -3,7 +3,7 @@ const { readFileSync } = require("fs")
 const { CWD, addAsset, arrayCombinator, updateAsset } = require("../util")
 const { SW_FILENAME, SW_FILES_MARKER } = require("../constants")
 const generateManifest = require("./generate-manifest")
-const toIco = require("to-ico")
+const generateFavicon = require("./generate-favicon")
 
 const doctype = "<!DOCTYPE html>"
 const robotsContent = "User-agent: *\nAllow: /"
@@ -38,10 +38,7 @@ const injectManifest = (compilation, options) => {
   if (options.inject.manifest) {
     return generateManifest(compilation, options).then((generatedManifest) => {
       addAsset(compilation, "manifest.json", JSON.stringify(generatedManifest), {}, false)
-      const iconContent = compilation.assets["assets/media/images/favicon.png"].source()
-      return toIco([iconContent]).then((buffer) => {
-        addAsset(compilation, "favicon.ico", buffer, {}, false)
-      })
+      return generateFavicon(compilation)
     })
   } else {
     return new Promise((resolve) => resolve(true))
