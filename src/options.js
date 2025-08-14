@@ -1,0 +1,68 @@
+const optionsDefault = {
+  html: {
+    template: [],
+    header: {},
+    injectBaseHeader: true,
+    injectDoctype: true,
+    minify: true,
+    babelize: false,
+  },
+  css: {
+    views: {},
+    shared: [],
+    injectViews: {},
+    injectShared: [],
+    inline: true,
+    injectCss: {},
+  },
+  font: {
+    path: "resources/Roboto-Regular.woff2",
+    fontFamily: "Roboto",
+    fontFamilyFallback: "sans-serif",
+    format: "woff2",
+    fontStyle: "normal",
+    fontWeight: 400,
+    fontDisplay: "swap",
+    inline: false,
+    primary: true,
+  },
+  js: {
+    inline: false,
+    head: true,
+    babelify: false,
+    injectJs: {},
+  },
+  media: {
+    optimizeImages: true,
+    optimizeIcons: true,
+    injectImageFallback: false,
+  },
+  inject: {
+    manifest: true,
+    robots: true,
+    sw: true,
+    errorOverlay: false,
+    add: {},
+    remove: [],
+  },
+  theme: "#ff0000",
+  icon: undefined,
+  manifest: {
+    shortName: "short-name",
+    name: "name",
+    startUrl: ".",
+    display: "standalone",
+    bgColor: "#000000",
+  },
+  resourceHints: {
+    preload: [],
+    prefetch: [],
+    preconnect: [],
+  },
+  compression: {
+    gzip: true,
+    brotli: true,
+  },
+}
+
+module.exports = optionsDefault

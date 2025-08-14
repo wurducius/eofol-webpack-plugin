@@ -1,5 +1,8 @@
-const path = require("path")
-const fs = require("fs")
+const { sep, resolve } = require("path")
+const {
+  existsSync,
+  promises: { readFile },
+} = require("fs")
 
 const CWD = process.cwd()
 const tagHeadEnd = "</head>"
@@ -29,13 +32,21 @@ const addAsset = (compilation, assetName, nextSource, info, merge) => {
   })
 }
 
-const transformAsset = (compilation, assetName) => {
-  const asset = compilation.assets[assetName]
-  const source = asset.source()
-  const finish = (nextSource) => {
-    addAsset(compilation, assetName, nextSource, asset.info, true)
+const updateAsset = (compilation, assetName, nextSource) => {
+  compilation.updateAsset(assetName, {
+    source: () => nextSource,
+    size: () => nextSource.length,
+  })
+}
+
+function arrayCombinator(items, handler) {
+  if (Array.isArray(items)) {
+    items.forEach((item, index) => {
+      handler(item, index)
+    })
+  } else if (items) {
+    handler(items, undefined)
   }
-  return { assetName, asset, source, finish }
 }
 
 const mapCombinator = (items, mapper) => {
@@ -67,36 +78,49 @@ const mergeDeep = (...objects) => {
 }
 
 const readResource = (styleName) => {
-  const filename = path.resolve(CWD, styleName)
-  const exists = fs.existsSync(filename)
+  const filename = resolve(CWD, styleName)
+  const exists = existsSync(filename)
   if (!exists) {
     throw new Error(`File not found: ${styleName}`)
   }
-  return fs.promises.readFile(filename, "utf-8").then((buffer) => buffer.toString())
+  return readFile(filename, "utf-8").then((buffer) => buffer.toString())
 }
 
-const replaceSep = (pathname) => pathname.replaceAll("/", path.sep)
+const replaceSep = (pathname) => pathname.replaceAll("/", sep)
+
+const replaceSepToHtml = (pathname) => pathname.replaceAll(sep, "/")
+
+const replaceSepToDash = (assetName) => assetName.replaceAll(sep, "-")
 
 const injectHead = (html, injected) => {
   const split = html.split(tagHeadEnd)
   return split[0] + injected + tagHeadEnd + split[1]
 }
 
+const injectBody = (html, injected) => {
+  const split = html.split("</body>")
+  return `${split[0] + injected}</body>${split[1]}`
+}
+
 const tag = (tagName, content) => `<${tagName}>${content}</${tagName}>`
 
 const logError = (msg) => (ex) => {
-  console.error(PLUGIN_NAME + ": Error during " + msg + ": ", ex)
+  console.error(`${PLUGIN_NAME}: Error during ${msg}: `, ex)
 }
 
 module.exports = {
   addAsset,
-  transformAsset,
+  updateAsset,
+  arrayCombinator,
   mapCombinator,
   mergeDeep,
   readResource,
   injectHead,
+  injectBody,
   tag,
   replaceSep,
+  replaceSepToHtml,
+  replaceSepToDash,
   logError,
   PLUGIN_NAME,
   CWD,
