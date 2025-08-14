@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@babel/core": "7.28.0",
+    "brotli-compress": "^1.3.3",
     "html-minifier-terser": "7.2.0",
     "ico-packer": "1.0.0",
     "sharp": "0.34.3",

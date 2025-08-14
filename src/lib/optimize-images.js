@@ -21,7 +21,7 @@ const optimizeImages = (compilation) =>
       .map((filename) => {
         return optimizePng(join(CWD, "public", filename)).then((nextSource) => {
           addAsset(compilation, filename, nextSource, {}, false)
-          return new Promise((resolve) => resolve(true))
+          return Promise.resolve()
         })
       }),
     ...Object.keys(compilation.assets)
@@ -29,7 +29,7 @@ const optimizeImages = (compilation) =>
       .map((filename) => {
         return optimizeJpg(join(CWD, "public", filename)).then((nextSource) => {
           addAsset(compilation, filename, nextSource, {}, false)
-          return new Promise((resolve) => resolve(true))
+          return Promise.resolve()
         })
       }),
     ...Object.keys(compilation.assets)
@@ -37,7 +37,7 @@ const optimizeImages = (compilation) =>
       .map((filename) => {
         return optimizeGif(join(CWD, "public", filename)).then((nextSource) => {
           addAsset(compilation, filename, nextSource, {}, false)
-          return new Promise((resolve) => resolve(true))
+          return Promise.resolve()
         })
       }),
   ])
