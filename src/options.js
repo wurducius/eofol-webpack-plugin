@@ -54,6 +54,9 @@ const optionsDefault = {
     display: "standalone",
     bgColor: "#000000",
   },
+  preload: [],
+  prefetch: [],
+  preconnect: [],
 }
 
 module.exports = optionsDefault
