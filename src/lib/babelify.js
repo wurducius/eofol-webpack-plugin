@@ -18,7 +18,7 @@ const babelify = (compilation, options) => {
         }),
     )
   } else {
-    return new Promise((resolve) => resolve(true))
+    return Promise.resolve()
   }
 }
 

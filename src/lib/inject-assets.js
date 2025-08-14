@@ -2,7 +2,7 @@ const { join } = require("path")
 const {
   promises: { readFile },
 } = require("fs")
-const { CWD, addAsset, arrayCombinator, updateAsset, mapCombinator } = require("../util")
+const { CWD, addAsset, updateAsset, mapCombinator } = require("../util")
 const { SW_FILENAME, SW_FILES_MARKER } = require("../constants")
 const generateManifest = require("./generate-manifest")
 const generateFavicon = require("./generate-favicon")
@@ -43,7 +43,7 @@ const injectManifest = (compilation, options) => {
       return generateFavicon(compilation)
     })
   } else {
-    return new Promise((resolve) => resolve(true))
+    return Promise.resolve()
   }
 }
 

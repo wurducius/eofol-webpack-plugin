@@ -54,6 +54,15 @@ const optionsDefault = {
     display: "standalone",
     bgColor: "#000000",
   },
+  resourceHints: {
+    preload: [],
+    prefetch: [],
+    preconnect: [],
+  },
+  compression: {
+    gzip: true,
+    brotli: true,
+  },
 }
 
 module.exports = optionsDefault
