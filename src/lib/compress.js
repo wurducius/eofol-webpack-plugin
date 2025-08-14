@@ -2,7 +2,6 @@ const gzipCompress = require("./gzip")
 const brotliCompress = require("./brotli")
 const { addAsset } = require("../util")
 
-// eslint-disable-next-line no-unused-vars
 const compress = (compilation, options) => {
   const compressed = {}
   return Promise.all(
@@ -25,14 +24,20 @@ const compress = (compilation, options) => {
           const source = compilation.assets[assetName].source()
           return assetName.endsWith(".gz") || assetName.endsWith(".br")
             ? Promise.resolve()
-            : Promise.all([
-                gzipCompress(source).then((gzipped) => {
-                  compressed[`${assetName}.gz`] = gzipped
-                }),
-                brotliCompress(source).then((brotlied) => {
-                  compressed[`${assetName}.br`] = brotlied
-                }),
-              ])
+            : Promise.all(
+                [
+                  options.compression.gzip
+                    ? gzipCompress(source).then((gzipped) => {
+                        compressed[`${assetName}.gz`] = gzipped
+                      })
+                    : undefined,
+                  options.compression.brotli
+                    ? brotliCompress(source).then((brotlied) => {
+                        compressed[`${assetName}.br`] = brotlied
+                      })
+                    : undefined,
+                ].filter(Boolean),
+              )
         }
       }),
   ).then(() => {
