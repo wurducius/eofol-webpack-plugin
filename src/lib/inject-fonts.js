@@ -6,11 +6,7 @@ const { CWD } = require("../util")
 
 const bytesToBase64 = (bytes) => btoa(Array.from(bytes, (byte) => String.fromCodePoint(byte)).join(""))
 
-const injectFonts = (args) => {
-  return readFile(join(CWD, args.path)).then((fontContent) => {
-    const fontPathSplit = args.path.split("/")
-    const fontFilename = fontPathSplit[fontPathSplit.length - 1]
-    return `@font-face {
+const fontTemplate = (args, fontFilename, fontContent) => `@font-face {
               font-family: "${args.fontFamily}";
               font-style: ${args.fontStyle ?? "normal"};
               font-weight: ${args.fontWeight ?? "400"};
@@ -19,6 +15,12 @@ const injectFonts = (args) => {
               format("${args.format}");
               }
               ${args.primary ? `body { font-family: ${args.fontFamily}${args.fontFamilyFallback ? `, ${args.fontFamilyFallback}` : ""}; font-size: 1rem; }` : ""}`
+
+const injectFonts = (args) => {
+  return readFile(join(CWD, args.path)).then((fontContent) => {
+    const fontPathSplit = args.path.split("/")
+    const fontFilename = fontPathSplit[fontPathSplit.length - 1]
+    return fontTemplate(args, fontFilename, fontContent)
   })
 }
 

@@ -1,13 +1,15 @@
 const { mapCombinator, readResource, replaceSep, replaceSepToDash, updateAsset } = require("./util")
 const injectAssets = require("./lib/inject-assets")
-const compileHtmlFromTemplate = require("./lib/template")
+const compileHtmlFromTemplate = require("./lib/html-template")
 const injectHtmlHead = require("./lib/inject-head")
 const injectHtmlBody = require("./lib/inject-body")
 const babelify = require("./lib/babelify")
 const injectViews = require("./lib/inject-views")
+const createPages = require("./lib/create-pages")
 
 const precompile = (_compiler, compilation, options) => {
   return injectViews(compilation).then(() => {
+    createPages(compilation, options)
     compileHtmlFromTemplate(compilation, options)
     injectAssets(compilation, options)
     return babelify(compilation, options).then(() =>
