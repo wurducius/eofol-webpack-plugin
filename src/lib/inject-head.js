@@ -1,10 +1,9 @@
 const { injectHead, tag } = require("../util")
 const injectFonts = require("./inject-fonts")
 const helmet = require("./helmet")
-const errorOverlayStyles = require("./error-overlay-styles")
+const { errorOverlayStyles } = require("./resources/error-overlay")
 const resourceHint = require("./resource-hint")
-
-const baseHeader = '<meta charset="UTF-8"><meta content="width=device-width,initial-scale=1" name="viewport">'
+const { baseHead } = require("./resources/head")
 
 const injectHtmlHead = (pageName, baseName, source, contents, sharedCssContent, options) => {
   const { header } = options.html
@@ -14,7 +13,7 @@ const injectHtmlHead = (pageName, baseName, source, contents, sharedCssContent, 
   const injectedContent = options?.css?.injectCss[pageName] ? [...contents, options.css.injectCss[pageName]] : contents
   const scriptName = `assets/js/${baseName}.js`
   const stylesheetName = `assets/css/${baseName}.css`
-  const injectedBaseHead = options.html.injectBaseHeader ? baseHeader : ""
+  const injectedBaseHead = options.html.injectBaseHeader ? baseHead : ""
   const injectedHeader = header ? helmet(header) : ""
   return (
     Array.isArray(options.font)
